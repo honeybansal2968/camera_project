@@ -56,6 +56,38 @@ class _CameraAppState extends State<CameraApp> {
     });
   }
 
+  Future<void> saveImageToAppDirectory(Uint8List imageBytes) async {
+    Directory? directory;
+    // Get the app's document directory
+    directory = await getExternalStorageDirectory();
+    String newPath = "";
+    print(directory);
+    List<String> paths = directory!.path.split("/");
+    for (int x = 1; x < paths.length; x++) {
+      String folder = paths[x];
+      if (folder != "com.example.camera_project") {
+        newPath += "/$folder";
+      } else {
+        newPath += "/$folder";
+        break;
+      }
+    }
+    newPath = "$newPath/${widget.carNumber}";
+    directory = Directory(newPath);
+    File saveFile = File("${directory.path}/${DateTime.now()}.png");
+    if (!await directory.exists()) {
+      await directory.create(recursive: true);
+    }
+    if (await directory.exists()) {
+      await saveFile.writeAsBytes(imageBytes);
+
+      // await ImageGallerySaver.saveFile(saveFile.path,
+      //       isReturnPathOfIOS: true);
+    }
+
+    print('Image saved to: $saveFile');
+  }
+
   Future<void> _captureAndSavePng() async {
     print("here");
     RenderRepaintBoundary boundary =
@@ -63,24 +95,26 @@ class _CameraAppState extends State<CameraApp> {
     ui.Image image = await boundary.toImage(pixelRatio: 3.0);
     ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
     Uint8List uint8List = byteData!.buffer.asUint8List();
-
-    final result = await ImageGallerySaver.saveImage(uint8List);
-
-    if (result['isSuccess']) {
-      print('Image saved to gallery');
-    } else {
-      print('Failed to save image to gallery');
-    }
+    saveImageToAppDirectory(uint8List);
+    // final result = await ImageGallerySaver.saveImage(uint8List);
+    // print(result['filePath']);
+    // if (result['isSuccess']) {
+    //   print('Image saved to gallery');
+    // } else {
+    //   print('Failed to save image to gallery $result');
+    // }
   }
 
   Future<void> _takePicture(CameraController controller, int index) async {
     try {
       final image = await controller.takePicture();
+      print("image path is ${image.path}");
       // _imageController.setImageFile(File(image.path));
       _imageController.setImagePath(image.path, index);
       _imageController.isTakenphoto.value = true;
 
       await Future.delayed(const Duration(milliseconds: 400));
+
       // Call _captureAndSavePng function after setting the image file
       await _captureAndSavePng();
     } catch (e) {
@@ -89,7 +123,8 @@ class _CameraAppState extends State<CameraApp> {
   }
 
   // Future<void> saveImageToGallery(String imagePath) async {
-  //   final result = await GallerySaver.saveImage(imagePath);
+  //   final result =
+  //       await GallerySaver.saveImage("${widget.carNumber}/$imagePath");
   //   print('Image saved to gallery: $result');
   // }
 
@@ -119,102 +154,107 @@ class _CameraAppState extends State<CameraApp> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        // appBar: AppBar(
-        //   backgroundColor: kPrimaryColor,
-        //   title: Text(widget.carNumber),
-        // ),
+        appBar: AppBar(
+          backgroundColor: kPrimaryColor,
+          title: Text(widget.carNumber),
+        ),
         body: Center(
           child: controller.value.isInitialized
-              ? Stack(
-                  alignment: FractionalOffset.center,
+              ? Column(
                   children: [
-                    Obx(
-                      () => _imageController.images.isNotEmpty
-                          ? _imageController
-                                      .images[_imageController.counter.value]
-                                      .values
-                                      .first !=
-                                  ""
-                              ? RepaintBoundary(
-                                  key: _globalKey,
-                                  child: Stack(
-                                    children: [
-                                      Container(
-                                        alignment: Alignment.center,
-                                        child: Image.file(
-                                          File(_imageController
-                                              .images[_imageController
-                                                  .counter.value]
-                                              .values
-                                              .first),
-                                          height: 250,
-                                          width: double.infinity,
-                                          fit: BoxFit.cover,
-                                        ),
-                                      ),
-                                      const Positioned(
-                                        bottom: 0,
-                                        left: 10,
-                                        child: Text(
-                                          "DL1023",
-                                          style: TextStyle(
-                                            color: Colors.black,
-                                            fontSize: 12.0,
+                    Stack(
+                      children: [
+                        Obx(
+                          () => _imageController.images.isNotEmpty
+                              ? _imageController
+                                          .images[
+                                              _imageController.counter.value]
+                                          .values
+                                          .first !=
+                                      ""
+                                  ? RepaintBoundary(
+                                      key: _globalKey,
+                                      child: Stack(
+                                        children: [
+                                          Container(
+                                            alignment: Alignment.center,
+                                            child: Image.file(
+                                              File(_imageController
+                                                  .images[_imageController
+                                                      .counter.value]
+                                                  .values
+                                                  .first),
+                                              height: 250,
+                                              width: double.infinity,
+                                              fit: BoxFit.cover,
+                                            ),
                                           ),
-                                        ),
-                                      ),
-                                      Positioned(
-                                        bottom: 0,
-                                        right: 10,
-                                        child: Text(
-                                          formatDateTimeString(
-                                              DateTime.now().toString()),
-                                          style: const TextStyle(
-                                            color: Colors.black,
-                                            fontSize: 12.0,
+                                          const Positioned(
+                                            bottom: 0,
+                                            left: 10,
+                                            child: Text(
+                                              "DL1023",
+                                              style: TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 12.0,
+                                              ),
+                                            ),
                                           ),
-                                        ),
-                                      )
-                                    ],
-                                  ),
-                                )
-                              : Container()
-                          : Container(),
+                                          Positioned(
+                                            bottom: 0,
+                                            right: 10,
+                                            child: Text(
+                                              formatDateTimeString(
+                                                  DateTime.now().toString()),
+                                              style: const TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 12.0,
+                                              ),
+                                            ),
+                                          )
+                                        ],
+                                      ),
+                                    )
+                                  : Container()
+                              : Container(),
+                        ),
+                        CameraViewWidget(
+                          controller: controller,
+                        ),
+                        // Positioned(
+                        //     top: 10,
+                        //     left: 10,
+                        //     child: IconButton(
+                        //       icon: const Icon(Icons.cancel),
+                        //       onPressed: () {
+                        //         Get.back();
+                        //       },
+                        //     )),
+                      ],
                     ),
-                    Positioned.fill(
-                      child: CameraViewWidget(
-                        controller: controller,
-                      ),
+                    const SizedBox(
+                      height: 3,
                     ),
-                    Positioned(
-                      bottom: 60,
-                      child: ImagesListView(),
-                    ),
-                    Positioned(
-                        bottom: 10,
-                        child: Obx(() => ElevatedButton(
-                              onPressed: _imageController.isTakenphoto.value
-                                  ? () async {
-                                      _imageController.counter.value++;
-
-                                      _imageController.images.add(
-                                          {_imageController.counter.value: ""});
-                                      int tempIndex =
-                                          _imageController.counter.value;
-                                      _imageController.isTakenphoto.value =
-                                          false;
-                                      await _takePicture(controller, tempIndex);
-                                    }
-                                  : null,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    _imageController.isTakenphoto.value
-                                        ? kPrimaryColor
-                                        : const ui.Color.fromARGB(
-                                            255, 69, 116, 155),
-                              ),
-                              child: const Text('Capture Image'),
-                            )))
+                    ImagesListView(),
+                    Obx(() => ElevatedButton(
+                          onPressed: _imageController.isTakenphoto.value
+                              ? () async {
+                                  _imageController.counter.value++;
+                                  _imageController.images.add(
+                                      {_imageController.counter.value: ""});
+                                  int tempIndex =
+                                      _imageController.counter.value;
+                                  _imageController.isTakenphoto.value = false;
+                                  await _takePicture(controller, tempIndex);
+                                }
+                              : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _imageController.isTakenphoto.value
+                                ? kPrimaryColor
+                                : const ui.Color.fromARGB(255, 69, 116, 155),
+                          ),
+                          child: const Text('Capture Image'),
+                        ))
                   ],
                 )
               : const CircularProgressIndicator(),
@@ -264,8 +304,7 @@ class CameraViewWidget extends StatelessWidget {
         (controller.value.aspectRatio *
             MediaQuery.of(context).size.aspectRatio);
     return Transform.scale(
-      scale: scale,
-      alignment: Alignment.topCenter,
+      scale: 1,
       child: CameraPreview(controller),
     );
   }
