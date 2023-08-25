@@ -6,7 +6,6 @@ import 'dart:ui' as ui;
 import 'package:camera_project/constants/colors.dart';
 import 'package:camera_project/main.dart';
 import 'package:camera_project/modules/image_capture_module/controller/images_manage.dart';
-import 'package:camera_project/modules/image_capture_module/pages/custom_camera_preview.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/rendering.dart';
@@ -118,106 +117,108 @@ class _CameraAppState extends State<CameraApp> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: kPrimaryColor,
-        title: Text(widget.carNumber),
-      ),
-      body: Center(
-        child: controller.value.isInitialized
-            ? Column(
-                children: [
-                  Stack(
-                    children: [
-                      Obx(
-                        () => _imageController.images.isNotEmpty
-                            ? _imageController
-                                        .images[_imageController.counter.value]
-                                        .values
-                                        .first !=
-                                    ""
-                                ? RepaintBoundary(
-                                    key: _globalKey,
-                                    child: Stack(
-                                      children: [
-                                        Container(
-                                          alignment: Alignment.center,
-                                          child: Image.file(
-                                            File(_imageController
-                                                .images[_imageController
-                                                    .counter.value]
-                                                .values
-                                                .first),
-                                            height: 250,
-                                            width: double.infinity,
-                                            fit: BoxFit.cover,
+    return SafeArea(
+      child: Scaffold(
+        // appBar: AppBar(
+        //   backgroundColor: kPrimaryColor,
+        //   title: Text(widget.carNumber),
+        // ),
+        body: Center(
+          child: controller.value.isInitialized
+              ? Stack(
+                  alignment: FractionalOffset.center,
+                  children: [
+                    Obx(
+                      () => _imageController.images.isNotEmpty
+                          ? _imageController
+                                      .images[_imageController.counter.value]
+                                      .values
+                                      .first !=
+                                  ""
+                              ? RepaintBoundary(
+                                  key: _globalKey,
+                                  child: Stack(
+                                    children: [
+                                      Container(
+                                        alignment: Alignment.center,
+                                        child: Image.file(
+                                          File(_imageController
+                                              .images[_imageController
+                                                  .counter.value]
+                                              .values
+                                              .first),
+                                          height: 250,
+                                          width: double.infinity,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                      const Positioned(
+                                        bottom: 0,
+                                        left: 10,
+                                        child: Text(
+                                          "DL1023",
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                            fontSize: 12.0,
                                           ),
                                         ),
-                                        const Positioned(
-                                          bottom: 0,
-                                          left: 10,
-                                          child: Text(
-                                            "DL1023",
-                                            style: TextStyle(
-                                              color: Colors.black,
-                                              fontSize: 12.0,
-                                            ),
+                                      ),
+                                      Positioned(
+                                        bottom: 0,
+                                        right: 10,
+                                        child: Text(
+                                          formatDateTimeString(
+                                              DateTime.now().toString()),
+                                          style: const TextStyle(
+                                            color: Colors.black,
+                                            fontSize: 12.0,
                                           ),
                                         ),
-                                        Positioned(
-                                          bottom: 0,
-                                          right: 10,
-                                          child: Text(
-                                            formatDateTimeString(
-                                                DateTime.now().toString()),
-                                            style: const TextStyle(
-                                              color: Colors.black,
-                                              fontSize: 12.0,
-                                            ),
-                                          ),
-                                        )
-                                      ],
-                                    ),
-                                  )
-                                : Container()
-                            : Container(),
+                                      )
+                                    ],
+                                  ),
+                                )
+                              : Container()
+                          : Container(),
+                    ),
+                    Positioned.fill(
+                      child: CameraViewWidget(
+                        controller: controller,
                       ),
-                      Positioned.fill(
-                        child: CameraViewWidget(
-                          controller: controller,
-                        ),
-                      )
-                    ],
-                  ),
-                  SizedBox(
-                    height: 20,
-                  ),
-                  ImagesListView(),
-                  SizedBox(
-                    height: 20,
-                  ),
-                  Obx(() => ElevatedButton(
-                        onPressed: _imageController.isTakenphoto.value
-                            ? () async {
-                                _imageController.counter.value++;
+                    ),
+                    Positioned(
+                      bottom: 60,
+                      child: ImagesListView(),
+                    ),
+                    Positioned(
+                        bottom: 10,
+                        child: Obx(() => ElevatedButton(
+                              onPressed: _imageController.isTakenphoto.value
+                                  ? () async {
+                                      _imageController.counter.value++;
 
-                                _imageController.images
-                                    .add({_imageController.counter.value: ""});
-                                int tempIndex = _imageController.counter.value;
-                                _imageController.isTakenphoto.value = false;
-                                await _takePicture(controller, tempIndex);
-                              }
-                            : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _imageController.isTakenphoto.value
-                              ? kPrimaryColor
-                              : const ui.Color.fromARGB(255, 191, 215, 235),
-                        ),
-                        child: const Text('Capture Image'),
-                      ))
-                ],
-              )
-            : const CircularProgressIndicator(),
+                                      _imageController.images.add(
+                                          {_imageController.counter.value: ""});
+                                      int tempIndex =
+                                          _imageController.counter.value;
+                                      _imageController.isTakenphoto.value =
+                                          false;
+                                      await _takePicture(controller, tempIndex);
+                                    }
+                                  : null,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    _imageController.isTakenphoto.value
+                                        ? kPrimaryColor
+                                        : const ui.Color.fromARGB(
+                                            255, 69, 116, 155),
+                              ),
+                              child: const Text('Capture Image'),
+                            )))
+                  ],
+                )
+              : const CircularProgressIndicator(),
+        ),
       ),
     );
   }
@@ -230,16 +231,23 @@ class _CameraAppState extends State<CameraApp> {
         child: ListView.builder(
             scrollDirection: Axis.horizontal,
             itemCount: _imageController.images.length,
-            padding: EdgeInsets.symmetric(horizontal: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             itemBuilder: (context, index) {
               return _imageController.images[index].values.first != ""
-                  ? Image.file(
-                      File(_imageController.images[index].values.first))
+                  ? Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 10),
+                      decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey, width: 2)),
+                      child: Image.file(
+                          File(_imageController.images[index].values.first)),
+                    )
                   : Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 10),
                       height: 50,
                       width: 50,
-                      color: Colors.grey,
-                    );
+                      decoration: BoxDecoration(
+                          color: const ui.Color.fromARGB(255, 212, 210, 210),
+                          border: Border.all(color: Colors.grey, width: 2)));
             }),
       );
     });
@@ -252,8 +260,12 @@ class CameraViewWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: controller.value.aspectRatio,
+    final scale = 1 /
+        (controller.value.aspectRatio *
+            MediaQuery.of(context).size.aspectRatio);
+    return Transform.scale(
+      scale: scale,
+      alignment: Alignment.topCenter,
       child: CameraPreview(controller),
     );
   }
