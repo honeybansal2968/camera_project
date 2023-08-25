@@ -6,6 +6,7 @@ import 'dart:ui' as ui;
 import 'package:camera_project/constants/colors.dart';
 import 'package:camera_project/main.dart';
 import 'package:camera_project/modules/image_capture_module/controller/images_manage.dart';
+import 'package:camera_project/modules/image_capture_module/pages/custom_camera_preview.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/rendering.dart';
@@ -73,11 +74,13 @@ class _CameraAppState extends State<CameraApp> {
     }
   }
 
-  Future<void> _takePicture(CameraController controller) async {
+  Future<void> _takePicture(CameraController controller, int index) async {
     try {
       final image = await controller.takePicture();
+      // _imageController.setImageFile(File(image.path));
+      _imageController.setImagePath(image.path, index);
       _imageController.isTakenphoto.value = true;
-      _imageController.setImageFile(File(image.path));
+
       await Future.delayed(const Duration(milliseconds: 400));
       // Call _captureAndSavePng function after setting the image file
       await _captureAndSavePng();
@@ -127,72 +130,122 @@ class _CameraAppState extends State<CameraApp> {
                   Stack(
                     children: [
                       Obx(
-                        () => _imageController.imageFile.value != null
-                            ? RepaintBoundary(
-                                key: _globalKey,
-                                child: Stack(
-                                  children: [
-                                    Container(
-                                      alignment: Alignment.center,
-                                      child: Image.file(
-                                        _imageController.imageFile.value!,
-                                        height: 250,
-                                        width: double.infinity,
-                                        fit: BoxFit.cover,
-                                      ),
-                                    ),
-                                    const Positioned(
-                                      bottom: 0,
-                                      left: 10,
-                                      child: Text(
-                                        "DL1023",
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 12.0,
+                        () => _imageController.images.isNotEmpty
+                            ? _imageController
+                                        .images[_imageController.counter.value]
+                                        .values
+                                        .first !=
+                                    ""
+                                ? RepaintBoundary(
+                                    key: _globalKey,
+                                    child: Stack(
+                                      children: [
+                                        Container(
+                                          alignment: Alignment.center,
+                                          child: Image.file(
+                                            File(_imageController
+                                                .images[_imageController
+                                                    .counter.value]
+                                                .values
+                                                .first),
+                                            height: 250,
+                                            width: double.infinity,
+                                            fit: BoxFit.cover,
+                                          ),
                                         ),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      bottom: 0,
-                                      right: 10,
-                                      child: Text(
-                                        formatDateTimeString(
-                                            DateTime.now().toString()),
-                                        style: const TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 12.0,
+                                        const Positioned(
+                                          bottom: 0,
+                                          left: 10,
+                                          child: Text(
+                                            "DL1023",
+                                            style: TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 12.0,
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                    )
-                                  ],
-                                ),
-                              )
+                                        Positioned(
+                                          bottom: 0,
+                                          right: 10,
+                                          child: Text(
+                                            formatDateTimeString(
+                                                DateTime.now().toString()),
+                                            style: const TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 12.0,
+                                            ),
+                                          ),
+                                        )
+                                      ],
+                                    ),
+                                  )
+                                : Container()
                             : Container(),
                       ),
-                      CameraViewWidget(
-                        controller: controller,
-                      ),
+                      Positioned.fill(
+                        child: CameraViewWidget(
+                          controller: controller,
+                        ),
+                      )
                     ],
                   ),
-                 Obx(() =>  ElevatedButton(
-                    
-                    onPressed: _imageController.isTakenphoto.value ?() async {
-                      _imageController.isTakenphoto.value = false;
-                      await _takePicture(controller);
-                    }:null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _imageController.isTakenphoto.value?kPrimaryColor:const ui.Color.fromARGB(255, 191, 215, 235),
-                    ),
-                    child: const Text('Capture Image'),
-                  ))
+                  SizedBox(
+                    height: 20,
+                  ),
+                  ImagesListView(),
+                  SizedBox(
+                    height: 20,
+                  ),
+                  Obx(() => ElevatedButton(
+                        onPressed: _imageController.isTakenphoto.value
+                            ? () async {
+                                _imageController.counter.value++;
+
+                                _imageController.images
+                                    .add({_imageController.counter.value: ""});
+                                int tempIndex = _imageController.counter.value;
+                                _imageController.isTakenphoto.value = false;
+                                await _takePicture(controller, tempIndex);
+                              }
+                            : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _imageController.isTakenphoto.value
+                              ? kPrimaryColor
+                              : const ui.Color.fromARGB(255, 191, 215, 235),
+                        ),
+                        child: const Text('Capture Image'),
+                      ))
                 ],
               )
             : const CircularProgressIndicator(),
       ),
-     
     );
   }
+
+  Widget ImagesListView() {
+    return Obx(() {
+      return SizedBox(
+        height: 55,
+        width: MediaQuery.of(context).size.width,
+        child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: _imageController.images.length,
+            padding: EdgeInsets.symmetric(horizontal: 10),
+            itemBuilder: (context, index) {
+              return _imageController.images[index].values.first != ""
+                  ? Image.file(
+                      File(_imageController.images[index].values.first))
+                  : Container(
+                      height: 50,
+                      width: 50,
+                      color: Colors.grey,
+                    );
+            }),
+      );
+    });
+  }
 }
+
 class CameraViewWidget extends StatelessWidget {
   final CameraController controller;
   const CameraViewWidget({super.key, required this.controller});
@@ -200,7 +253,7 @@ class CameraViewWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AspectRatio(
-      aspectRatio: 4 / 3,
+      aspectRatio: controller.value.aspectRatio,
       child: CameraPreview(controller),
     );
   }
