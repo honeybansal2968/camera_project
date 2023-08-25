@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.1.0 <4.0.0'
+  sdk: '>=3.1.0-326.0.dev <4.0.0'
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -42,6 +42,8 @@ dependencies:
   gallery_saver: ^2.3.2
   flutter_file_dialog: ^3.0.2
   multiple_image_camera: ^0.0.1
+  get: ^4.6.5
+  intl:
 
 dev_dependencies:
   flutter_test:
@@ -66,7 +68,8 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
+  assets:
+      - assets/Roboto-Black.ttf.zip
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 
