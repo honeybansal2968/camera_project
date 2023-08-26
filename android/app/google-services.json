@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "987220687698",
+    "project_id": "camera-car-stamping-app",
+    "storage_bucket": "camera-car-stamping-app.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:987220687698:android:93f861f0a870f2bca4188b",
+        "android_client_info": {
+          "package_name": "com.example.camera_project"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "987220687698-r39n2ouk37a49b7h60n0urssni5c1pf9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDbesOZs7DpVsDsOsaoMNz4eCX8MR4ssqI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "987220687698-r39n2ouk37a49b7h60n0urssni5c1pf9.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

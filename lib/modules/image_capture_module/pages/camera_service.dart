@@ -6,15 +6,14 @@ import 'dart:ui' as ui;
 import 'package:camera_project/constants/colors.dart';
 import 'package:camera_project/main.dart';
 import 'package:camera_project/modules/image_capture_module/controller/images_manage.dart';
+import 'package:camera_project/modules/image_capture_module/pages/image_file_page.dart';
+import 'package:camera_project/modules/image_capture_module/services/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:gallery_saver/gallery_saver.dart';
-import 'package:image/image.dart' as img;
 
 class CameraApp extends StatefulWidget {
   String carNumber;
@@ -36,7 +35,9 @@ class _CameraAppState extends State<CameraApp> {
   void initState() {
     super.initState();
     _globalKey = GlobalKey();
-    controller = CameraController(camera[0], ResolutionPreset.low);
+    controller = CameraController(camera[0], ResolutionPreset.medium);
+    controller.setFlashMode(FlashMode.off);
+
     controller.initialize().then((_) {
       if (!mounted) {
         return;
@@ -56,63 +57,56 @@ class _CameraAppState extends State<CameraApp> {
     });
   }
 
-  Future<void> saveImageToAppDirectory(Uint8List imageBytes) async {
-    Directory? directory;
-    // Get the app's document directory
-    directory = await getExternalStorageDirectory();
-    String newPath = "";
-    print(directory);
-    List<String> paths = directory!.path.split("/");
-    for (int x = 1; x < paths.length; x++) {
-      String folder = paths[x];
-      if (folder != "com.example.camera_project") {
-        newPath += "/$folder";
-      } else {
-        newPath += "/$folder";
-        break;
-      }
-    }
-    newPath = "$newPath/${widget.carNumber}";
-    directory = Directory(newPath);
-    File saveFile = File("${directory.path}/${DateTime.now()}.png");
-    if (!await directory.exists()) {
-      await directory.create(recursive: true);
-    }
-    if (await directory.exists()) {
-      await saveFile.writeAsBytes(imageBytes);
-
-      // await ImageGallerySaver.saveFile(saveFile.path,
-      //       isReturnPathOfIOS: true);
-    }
-
-    print('Image saved to: $saveFile');
-  }
-
+  /// Captures the contents of a [RenderRepaintBoundary], converts it to a [Uint8List],
+  /// and saves it to both the app's document directory and the gallery.
   Future<void> _captureAndSavePng() async {
     print("here");
+
+    // Find the RenderRepaintBoundary using the current context
     RenderRepaintBoundary boundary =
         _globalKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+
+    // Capture the image and convert it to a Uint8List
     ui.Image image = await boundary.toImage(pixelRatio: 3.0);
     ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
     Uint8List uint8List = byteData!.buffer.asUint8List();
-    saveImageToAppDirectory(uint8List);
-    // final result = await ImageGallerySaver.saveImage(uint8List);
-    // print(result['filePath']);
-    // if (result['isSuccess']) {
-    //   print('Image saved to gallery');
-    // } else {
-    //   print('Failed to save image to gallery $result');
-    // }
+
+
+    // Update the flag to indicate that a photo has been taken
+      _imageController.isTakenphoto.value = true;
+    // Save the image to the app's document directory
+    // saveImageToAppDirectory(uint8List);
+    // store image in firebase storage
+    FirebaseStorageResponse()
+        .uploadFile(uint8List, DateTime.now().toString(), widget.carNumber);
+    // Save the image to the gallery
+    final result = await ImageGallerySaver.saveImage(uint8List);
+    print(result['filePath']);
+
+    if (result['isSuccess']) {
+      print('Image saved to gallery');
+    } else {
+      print('Failed to save image to gallery $result');
+    }
   }
 
+  /// Captures a picture using the given [controller] and [index],
+  /// sets the image path in the image controller, and triggers the capture and save process.
+  ///
+  /// The [controller] represents the camera controller used to capture the image.
+  /// The [index] indicates the index of the camera being used.
   Future<void> _takePicture(CameraController controller, int index) async {
     try {
+      // Capture the picture using the provided controller
       final image = await controller.takePicture();
       print("image path is ${image.path}");
-      // _imageController.setImageFile(File(image.path));
-      _imageController.setImagePath(image.path, index);
-      _imageController.isTakenphoto.value = true;
 
+      // Set the image path in the image controller for the given index
+      _imageController.setImagePath(image.path, index);
+
+      
+
+      // Wait for a short duration to allow the image to be set
       await Future.delayed(const Duration(milliseconds: 400));
 
       // Call _captureAndSavePng function after setting the image file
@@ -121,12 +115,6 @@ class _CameraAppState extends State<CameraApp> {
       print(e);
     }
   }
-
-  // Future<void> saveImageToGallery(String imagePath) async {
-  //   final result =
-  //       await GallerySaver.saveImage("${widget.carNumber}/$imagePath");
-  //   print('Image saved to gallery: $result');
-  // }
 
   // Future<File> _addTextToPhoto(String photoPath, String text) async {
   //   var decodeImg = img.decodeImage(File(photoPath).readAsBytesSync())!;
@@ -156,7 +144,10 @@ class _CameraAppState extends State<CameraApp> {
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: kPrimaryColor,
-          title: Text(widget.carNumber),
+          title: Text(
+            widget.carNumber,
+            style: const TextStyle(color: Colors.white),
+          ),
         ),
         body: Center(
           child: controller.value.isInitialized
@@ -184,7 +175,7 @@ class _CameraAppState extends State<CameraApp> {
                                                       .counter.value]
                                                   .values
                                                   .first),
-                                              height: 250,
+                                              height: 300,
                                               width: double.infinity,
                                               fit: BoxFit.cover,
                                             ),
@@ -274,12 +265,21 @@ class _CameraAppState extends State<CameraApp> {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             itemBuilder: (context, index) {
               return _imageController.images[index].values.first != ""
-                  ? Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 10),
-                      decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey, width: 2)),
-                      child: Image.file(
-                          File(_imageController.images[index].values.first)),
+                  ? InkWell(
+                      onTap: () {
+                        Get.to(ImagePage(
+                          image_path:
+                              _imageController.images[index].values.first,
+                          car_number: widget.carNumber,
+                        ));
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 10),
+                        decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey, width: 2)),
+                        child: Image.file(
+                            File(_imageController.images[index].values.first)),
+                      ),
                     )
                   : Container(
                       margin: const EdgeInsets.symmetric(horizontal: 10),

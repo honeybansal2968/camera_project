@@ -44,6 +44,8 @@ dependencies:
   multiple_image_camera: ^0.0.1
   get: ^4.6.5
   intl:
+  firebase_storage: ^11.2.6
+  firebase_core: ^2.15.1
 
 dev_dependencies:
   flutter_test:
@@ -68,8 +70,8 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  assets:
-      - assets/Roboto-Black.ttf.zip
+  # assets:
+  #     - assets/Roboto-Black.ttf.zip
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 

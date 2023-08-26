@@ -1,5 +1,6 @@
 import 'package:camera/camera.dart';
 import 'package:camera_project/modules/vehicle_details_module/pages/vehicle_details.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -7,7 +8,7 @@ late List<CameraDescription> camera;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  await Firebase.initializeApp();
   camera = await availableCameras();
   runApp(const MyApp());
 }
